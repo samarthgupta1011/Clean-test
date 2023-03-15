@@ -1,0 +1,36 @@
+FROM python:3.10
+
+# Conda installation
+RUN apt-get update && \
+    apt-get install -y wget && \
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniconda3-latest-Linux-x86_64.sh && \
+    /opt/conda/bin/conda init && \
+    echo "conda activate base" >> ~/.bashrc
+ENV PATH="/opt/conda/bin:${PATH}"
+CMD ["bash"]
+# 
+
+FROM python:3.10
+WORKDIR /app
+RUN git clone https://github.com/tttianhao/CLEAN
+WORKDIR /app/CLEAN
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
+# Install torch using conda
+RUN conda install pytorch==1.11.0 cpuonly -c pytorch
+
+RUN git clone https://github.com/facebookresearch/esm.git
+RUN mkdir data/esm_data
+RUN mkdir data/pretrained
+
+# Download pretrained weights
+RUN pip install gdown
+RUN gdown --id 1zrEU-HPNV3wp7wLAx4KnuiVyD794Oboj
+RUN apt-get update && apt-get install -y unzip
+RUN unzip CLEAN_pretrained.zip -d data/pretrained
+
+# 
+RUN python build.py install
+
